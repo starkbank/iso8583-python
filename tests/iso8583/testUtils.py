@@ -10,6 +10,8 @@ class TestBinaryUtils(TestCase):
     def test_everything(self):
         for _ in range(1000):
             randomsequence = randomHex(max(randomBits(4), 1))
+            while not randomsequence.replace("0", ""):
+                randomsequence = randomHex(max(randomBits(4), 1))
             indexes = Binary.toIndexes(Binary.fromHex(randomsequence))
             answer = Binary.toHex(Binary.fromIndexes(indexes))
             n = len(randomsequence)
