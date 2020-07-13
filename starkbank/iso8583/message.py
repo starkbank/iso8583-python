@@ -1,5 +1,4 @@
 from bisect import bisect_left
-
 from starkbank.iso8583.templates import mastercard
 from starkbank.iso8583.utils.binary import Binary
 

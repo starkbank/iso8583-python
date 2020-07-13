@@ -1,4 +1,7 @@
+
+
 class Binary:
+
     @classmethod
     def fromHex(cls, string, length=64):
         return bin(int(string, 16))[2:].zfill(length)
