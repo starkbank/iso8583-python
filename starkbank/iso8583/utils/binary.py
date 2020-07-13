@@ -21,4 +21,4 @@ class Binary:
 
     @classmethod
     def toIndexes(cls, binary, offset=0):
-        return tuple(index + 1 + offset for index, value in enumerate(binary) if value == "1")
+        return [index + 1 + offset for index, value in enumerate(binary) if value == "1"]
