@@ -1,4 +1,5 @@
 from starkbank.iso8583.utils.enum import LengthType
+from binascii import hexlify
 
 
 def parseString(text):
@@ -14,7 +15,7 @@ def parseHexToBin(text, length=64):
 
 
 def parseBytesToBin(text, length=64):
-    return parseHexToBin(text.encode("cp500").hex(), length=length)
+    return parseHexToBin(text=hexlify(text.encode("cp500")), length=length)
 
 
 mastercard = {
