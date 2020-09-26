@@ -38,7 +38,7 @@ def parseElement(message, elementId, template):
 def parseBitmap(message, elementId, template):
     rule = template[elementId]
     size = rule["limit"]
-    binary = Binary.fromHex(message[:size])
+    binary = rule["parser"](message[:size])
     partial = message[size:]
     offset = 64 if elementNumber(elementId) else 0
     result = Binary.toIndexes(binary, offset=offset)

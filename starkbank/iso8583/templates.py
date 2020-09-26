@@ -13,10 +13,14 @@ def parseHexToBin(text, length=64):
     return bin(int(text, 16))[2:].zfill(length)
 
 
+def parseBytesToBin(text, length=64):
+    return parseHexToBin(text.encode("cp500").hex(), length=length)
+
+
 mastercard = {
     "MTI": {"type": LengthType.FIXED, "limit": 4, "parser": parseString},
-    "DE000": {"type": LengthType.FIXED, "limit": 16, "parser": parseHexToBin},
-    "DE001": {"type": LengthType.FIXED, "limit": 16, "parser": parseHexToBin},
+    "DE000": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin},
+    "DE001": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin},
     "DE002": {"type": LengthType.LLVAR, "limit": 19, "parser": parseString},
     "DE003": {"type": LengthType.FIXED, "limit": 6, "parser": parseString},
     "DE004": {"type": LengthType.FIXED, "limit": 12, "parser": parseString},
@@ -80,7 +84,7 @@ mastercard = {
     "DE062": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString},
     "DE063": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString},
     "DE064": {"type": LengthType.FIXED, "limit": 16, "parser": parseBin},
-    "DE065": {"type": LengthType.FIXED, "limit": 16, "parser": parseHexToBin},
+    "DE065": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin},
     "DE066": {"type": LengthType.FIXED, "limit": 1, "parser": parseString},
     "DE067": {"type": LengthType.FIXED, "limit": 2, "parser": parseString},
     "DE068": {"type": LengthType.FIXED, "limit": 3, "parser": parseString},
