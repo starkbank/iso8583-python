@@ -1,21 +1,28 @@
-from binascii import hexlify
+from binascii import hexlify, unhexlify
+from copy import deepcopy
 
 
 def parseString(text):
     return text
 
+def unparseString(text):
+    return text
 
 def parseBin(text):
     return text
 
-
-def parseHexToBin(text, length=64):
-    return bin(int(text, 16))[2:].zfill(length)
-
+def unparseBin(text):
+    return text
 
 def parseBytesToBin(text, length=64):
-    return parseHexToBin(text=hexlify(text.encode("cp500")), length=length)
+    hexString = hexlify(text.encode("cp500"))
+    binString = bin(int(hexString, 16))[2:].zfill(length)
+    return binString
 
+def unparseBytesToBin(text):
+    hexString = hex(int(text, 2))[2:]
+    byteString = unhexlify(hexString)
+    return byteString.decode("cp500")
 
 def parseDE048Scheme(text):
     json = {
@@ -27,3 +34,12 @@ def parseDE048Scheme(text):
         value, text = text[0:length], text[length:]
         json["SE" + key.zfill(2)] = value
     return json
+
+def unparseDE048Scheme(text):
+    json = deepcopy(text)
+    string = json.pop("SE00")
+    for key, value in sorted(json.items()):
+        key = key.replace("SE", "")
+        length = len(value)
+        string += key + str(length).zfill(2) + value
+    return string

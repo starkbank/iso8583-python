@@ -52,31 +52,32 @@ def unparse(parsed, template=mastercard):
     finalIndex = bisectLeft(elementIds, "DE129")
     BMP = elementIds[:index]
     BMS = elementIds[index:finalIndex]
-    output += unparseElement(parsed, "MTI", template)
-    output += unparseBitmap(BMP)
+    output += unparseElement(parsed, elementId="MTI", template=template)
+    output += unparseBitmap(BMP, elementId="DE000", template=template)
     for id in elementIds:
         if isBitmap(id):
-            output += unparseBitmap(BMS)
+            output += unparseBitmap(BMS, elementId=id, template=template)
             continue
-        output += unparseElement(parsed, id, template=template)
+        output += unparseElement(parsed, elementId=id, template=template)
     return output
 
 
-def unparseBitmap(keys):
+def unparseBitmap(keys, elementId, template):
     indexes = tuple(elementNumber(key) for key in keys)
     binaryString = Binary.fromIndexes(indexes=indexes, offset=64 * int((min(indexes) - 1) // 64))
-    hexString = Binary.toHex(binaryString)
-    return hexString.upper()
+    rule = template[elementId]
+    return rule["unparser"](binaryString)
 
 
-def unparseElement(message, elementId, template):
-    data = message[elementId]
-    if data:
-        info = template.get(elementId)
-        lengthType = info["type"]
-        var = str(len(data)).zfill(lengthType) if lengthType else ""
-        return var + data
-    return ""
+def unparseElement(json, elementId, template):
+    data = json[elementId]
+    rule = template[elementId]
+    size = rule["limit"]
+    unparsed = rule["unparser"](data)[:size]
+    if rule["type"]:
+        return str(len(unparsed)).zfill(rule["type"]) + unparsed
+
+    return unparsed
 
 
 def isBitmap(elementId):
