@@ -1,6 +1,6 @@
-from bisect import bisect_left
-from starkbank.iso8583.templates import mastercard
-from starkbank.iso8583.utils.binary import Binary
+from bisect import bisect_left as bisectLeft
+from .mastercard import mastercard
+from .utils.binary import Binary
 
 
 def parse(message, template=mastercard):
@@ -48,8 +48,8 @@ def parseBitmap(message, elementId, template):
 def unparse(parsed, template=mastercard):
     output = ""
     elementIds = sorted(key for key in set(parsed) if "DE" in key)
-    index = bisect_left(elementIds, "DE065")
-    finalIndex = bisect_left(elementIds, "DE129")
+    index = bisectLeft(elementIds, "DE065")
+    finalIndex = bisectLeft(elementIds, "DE129")
     BMP = elementIds[:index]
     BMS = elementIds[index:finalIndex]
     output += unparseElement(parsed, "MTI", template)

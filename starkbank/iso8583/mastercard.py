@@ -1,21 +1,5 @@
-from starkbank.iso8583.utils.enum import LengthType
-from binascii import hexlify
-
-
-def parseString(text):
-    return text
-
-
-def parseBin(text):
-    return text
-
-
-def parseHexToBin(text, length=64):
-    return bin(int(text, 16))[2:].zfill(length)
-
-
-def parseBytesToBin(text, length=64):
-    return parseHexToBin(text=hexlify(text.encode("cp500")), length=length)
+from .utils.enum import LengthType
+from .utils.parser import parseBin, parseString, parseBytesToBin, parseDE048Scheme
 
 
 mastercard = {
@@ -68,7 +52,7 @@ mastercard = {
     "DE045": {"type": LengthType.LLVAR, "limit": 76, "parser": parseString},
     "DE046": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString},
     "DE047": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString},
-    "DE048": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString},
+    "DE048": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseDE048Scheme},
     "DE049": {"type": LengthType.FIXED, "limit": 3, "parser": parseString},
     "DE050": {"type": LengthType.FIXED, "limit": 3, "parser": parseString},
     "DE051": {"type": LengthType.FIXED, "limit": 3, "parser": parseString},
