@@ -11,7 +11,7 @@ setup(
     description="Python library for conversion between ISO 8583 message standard and JSON",
     long_description=README,
     license="MIT License",
-    url='https://github.com/starkbank/febraban.git',
+    url="https://github.com/starkbank/iso8583-python",
     author="Stark Bank",
     author_email="developers@starkbank.com",
     keywords=["iso8583", "credit card", "debit card", "mastercard", "visa"],
