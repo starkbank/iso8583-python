@@ -1,6 +1,6 @@
 from .utils.enum import LengthType
-from .utils.parser import parseBin, parseString, parseBytesToBin, parseDE048Scheme
-from .utils.parser import unparseBin, unparseString, unparseBytesToBin, unparseDE048Scheme
+from .utils.parser import parseString, parseBytesToBin, parseDE048Scheme
+from .utils.parser import unparseString, unparseBytesToBin, unparseDE048Scheme
 
 
 mastercard = {
@@ -57,7 +57,7 @@ mastercard = {
     "DE049": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
     "DE050": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
     "DE051": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
-    "DE052": {"type": LengthType.FIXED, "limit": 16, "parser": parseBin, "unparser": unparseBin},
+    "DE052": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin, "unparser": unparseBytesToBin},
     "DE053": {"type": LengthType.FIXED, "limit": 16, "parser": parseString, "unparser": unparseString},
     "DE054": {"type": LengthType.LLLVAR, "limit": 120, "parser": parseString, "unparser": unparseString},
     "DE055": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
@@ -69,7 +69,7 @@ mastercard = {
     "DE061": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE062": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE063": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
-    "DE064": {"type": LengthType.FIXED, "limit": 16, "parser": parseBin, "unparser": unparseBin},
+    "DE064": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin, "unparser": unparseBytesToBin},
     "DE065": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin, "unparser": unparseBytesToBin},
     "DE066": {"type": LengthType.FIXED, "limit": 1, "parser": parseString, "unparser": unparseString},
     "DE067": {"type": LengthType.FIXED, "limit": 2, "parser": parseString, "unparser": unparseString},
@@ -101,7 +101,7 @@ mastercard = {
     "DE093": {"type": LengthType.FIXED, "limit": 5, "parser": parseString, "unparser": unparseString},
     "DE094": {"type": LengthType.FIXED, "limit": 7, "parser": parseString, "unparser": unparseString},
     "DE095": {"type": LengthType.FIXED, "limit": 42, "parser": parseString, "unparser": unparseString},
-    "DE096": {"type": LengthType.FIXED, "limit": 16, "parser": parseBin, "unparser": unparseBin},
+    "DE096": {"type": LengthType.FIXED, "limit": 8, "parser": parseString, "unparser": unparseString},
     "DE097": {"type": LengthType.FIXED, "limit": 17, "parser": parseString, "unparser": unparseString},
     "DE098": {"type": LengthType.FIXED, "limit": 25, "parser": parseString, "unparser": unparseString},
     "DE099": {"type": LengthType.LLVAR, "limit": 11, "parser": parseString, "unparser": unparseString},
@@ -133,5 +133,5 @@ mastercard = {
     "DE125": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE126": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE127": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
-    "DE128": {"type": LengthType.FIXED, "limit": 16, "parser": parseBin, "unparser": unparseBin},
+    "DE128": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin, "unparser": unparseBytesToBin},
 }
