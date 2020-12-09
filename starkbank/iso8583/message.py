@@ -6,7 +6,9 @@ from .utils.binary import Binary
 def parse(message, template=mastercard):
     message, MTI = parseElement(message, elementId="MTI", template=template)
     message, result = loopMessage(message, template)
-    return dict(result, MTI=MTI, BMP=result.pop("DE000"))
+    json = dict(MTI=MTI, BMP=result.pop("DE000"))
+    json.update(result)
+    return json
 
 
 def loopMessage(message, template):
