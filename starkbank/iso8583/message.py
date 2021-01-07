@@ -78,7 +78,12 @@ def unparseElement(json, elementId, template):
     unparsed = rule["unparser"](data)[:size]
     if rule["type"]:
         return str(len(unparsed)).zfill(rule["type"]) + unparsed
-
+    if len(unparsed) != size:
+        raise ValueError("{elementId}: Expected length {lenExpected}, got {lenActual}".format(
+            elementId=elementId,
+            lenExpected=size,
+            lenActual=len(unparsed)
+        ))
     return unparsed
 
 
