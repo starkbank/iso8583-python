@@ -30,7 +30,7 @@ def unparseBytesToBin(text, length=64):
     return byteString.decode("cp500")
 
 
-def parseDE048Scheme(text):
+def parseSubelementScheme(text):
     json = {
         "SE00": text[0]
     }
@@ -42,11 +42,30 @@ def parseDE048Scheme(text):
     return json
 
 
-def unparseDE048Scheme(text):
+def unparseSubelementScheme(text):
     json = deepcopy(text)
     string = json.pop("SE00")
     for key, value in sorted(json.items()):
-        key = key.replace("SE", "")
+        key = key.replace("SE00", "")
         length = len(value)
         string += key + str(length).zfill(2) + value
+    return string
+
+
+def parsePdsScheme(text):
+    json = {}
+    while text:
+        key, length, text = text[0:4], int(text[4:8]), text[8:]
+        value, text = text[0:length], text[length:]
+        json["PDS" + key.zfill(4)] = value
+    return json
+
+
+def unparsePdsScheme(text):
+    json = deepcopy(text)
+    string = ""
+    for key, value in sorted(json.items()):
+        key = key.replace("PDS", "")
+        length = len(value)
+        string += key + str(length).zfill(4) + value
     return string

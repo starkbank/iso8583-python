@@ -5,7 +5,11 @@ from .utils.binary import Binary
 
 def parse(message, template=mastercard):
     message, MTI = parseElement(message, elementId="MTI", template=template)
-    message, result = loopMessage(message, template)
+    version = {
+        "0": "1987",
+        "1": "1993",
+    }[MTI[0]]
+    message, result = loopMessage(message, template[version])
     json = dict(MTI=MTI, BMP=result.pop("DE000"))
     json.update(result)
     return json

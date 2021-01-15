@@ -1,9 +1,9 @@
+from copy import deepcopy
 from .utils.enum import LengthType
-from .utils.parser import parseString, parseBytesToBin, parseDE048Scheme
-from .utils.parser import unparseString, unparseBytesToBin, unparseDE048Scheme
+from .utils.parser import parseString, parseBytesToBin, parseSubelementScheme, parsePdsScheme, unparsePdsScheme
+from .utils.parser import unparseString, unparseBytesToBin, unparseSubelementScheme
 
-
-mastercard = {
+mastercard = {"1987": {
     "MTI": {"type": LengthType.FIXED, "limit": 4, "parser": parseString, "unparser": unparseString},
     "DE000": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin, "unparser": unparseBytesToBin},
     "DE001": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin, "unparser": unparseBytesToBin},
@@ -53,7 +53,7 @@ mastercard = {
     "DE045": {"type": LengthType.LLVAR, "limit": 76, "parser": parseString, "unparser": unparseString},
     "DE046": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE047": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
-    "DE048": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseDE048Scheme, "unparser": unparseDE048Scheme},
+    "DE048": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseSubelementScheme, "unparser": unparseSubelementScheme},
     "DE049": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
     "DE050": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
     "DE051": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
@@ -134,4 +134,13 @@ mastercard = {
     "DE126": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE127": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE128": {"type": LengthType.FIXED, "limit": 8, "parser": parseBytesToBin, "unparser": unparseBytesToBin},
-}
+}}
+
+mastercard["1993"] = deepcopy(mastercard["1987"])
+mastercard["1993"].update({
+    "DE048": {"type": LengthType.LLLVAR, "limit": 999, "parser": parsePdsScheme, "unparser": unparsePdsScheme},
+    "DE062": {"type": LengthType.LLLVAR, "limit": 999, "parser": parsePdsScheme, "unparser": unparsePdsScheme},
+    "DE123": {"type": LengthType.LLLVAR, "limit": 999, "parser": parsePdsScheme, "unparser": unparsePdsScheme},
+    "DE124": {"type": LengthType.LLLVAR, "limit": 999, "parser": parsePdsScheme, "unparser": unparsePdsScheme},
+    "DE125": {"type": LengthType.LLLVAR, "limit": 999, "parser": parsePdsScheme, "unparser": unparsePdsScheme},
+})
