@@ -46,7 +46,7 @@ def unparseSubelementScheme(text):
     json = deepcopy(text)
     string = json.pop("SE00")
     for key, value in sorted(json.items()):
-        key = key.replace("SE00", "")
+        key = key.replace("SE", "")
         length = len(value)
         string += key + str(length).zfill(2) + value
     return string

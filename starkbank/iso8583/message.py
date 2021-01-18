@@ -3,12 +3,17 @@ from .mastercard import mastercard
 from .utils.binary import Binary
 
 
-def parse(message, template=mastercard):
-    message, MTI = parseElement(message, elementId="MTI", template=template)
-    version = {
+def getVersion(MTI):
+    versionMap = {
         "0": "1987",
         "1": "1993",
-    }[MTI[0]]
+    }
+    return versionMap[MTI[0]]
+
+
+def parse(message, template=mastercard):
+    message, MTI = parseElement(message, elementId="MTI", template=template["1987"])
+    version = getVersion(MTI)
     message, result = loopMessage(message, template[version])
     json = dict(MTI=MTI, BMP=result.pop("DE000"))
     json.update(result)
@@ -53,18 +58,19 @@ def parseBitmap(message, elementId, template):
 
 def unparse(parsed, template=mastercard):
     output = ""
+    version = getVersion(parsed["MTI"])
     elementIds = sorted(key for key in set(parsed) if "DE" in key)
     index = bisectLeft(elementIds, "DE065")
     finalIndex = bisectLeft(elementIds, "DE129")
     BMP = elementIds[:index]
     BMS = elementIds[index:finalIndex]
-    output += unparseElement(parsed, elementId="MTI", template=template)
-    output += unparseBitmap(BMP, elementId="DE000", template=template)
+    output += unparseElement(parsed, elementId="MTI", template=template[version])
+    output += unparseBitmap(BMP, elementId="DE000", template=template[version])
     for id in elementIds:
         if isBitmap(id):
-            output += unparseBitmap(BMS, elementId=id, template=template)
+            output += unparseBitmap(BMS, elementId=id, template=template[version])
             continue
-        output += unparseElement(parsed, elementId=id, template=template)
+        output += unparseElement(parsed, elementId=id, template=template[version])
     return output
 
 
@@ -89,6 +95,11 @@ def unparseElement(json, elementId, template):
             lenActual=len(unparsed)
         ))
     return unparsed
+
+
+def insertBitmap(json):
+    json["BMP"] = sorted([int(key.replace("DE")) for key in json.keys() if key.startswith("DE")])
+    return json
 
 
 def isBitmap(elementId):
