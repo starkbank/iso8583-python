@@ -92,7 +92,7 @@ def unparseElement(json, elementId, template):
     size = rule["limit"]
     unparsed = rule["unparser"](data)[:size]
     if rule["type"]:
-        return (str(len(unparsed)).zfill(rule["type"]).encode() + unparsed)
+        return str(len(unparsed)).zfill(rule["type"]).encode() + unparsed
     if len(unparsed) != size:
         raise ValueError("{elementId}: Expected length {lenExpected}, got {lenActual}".format(
             elementId=elementId,
@@ -102,9 +102,8 @@ def unparseElement(json, elementId, template):
     return unparsed
 
 
-def insertBitmap(json):
-    json["BMP"] = sorted([int(key.replace("DE")) for key in json.keys() if key.startswith("DE")])
-    return json
+def getBitmap(json):
+    return sorted([elementNumber(key) for key in json.keys() if key.startswith("DE")])
 
 
 def isBitmap(elementId):

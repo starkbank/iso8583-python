@@ -1,7 +1,7 @@
-from copy import deepcopy
 from .utils.enum import LengthType
 from .utils.parser import parseString, parseBytesToBin, parseSubelements, parsePds, unparsePds
 from .utils.parser import unparseString, unparseBytesToBin, unparseSubelements
+
 
 mastercard = {"1987": {
     "MTI": {"type": LengthType.FIXED, "limit": 4, "parser": parseString, "unparser": unparseString},
