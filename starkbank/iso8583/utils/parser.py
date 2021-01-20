@@ -3,11 +3,11 @@ from copy import deepcopy
 
 
 def parseString(text):
-    return text
+    return text.decode()
 
 
 def unparseString(text):
-    return text
+    return text.encode()
 
 
 def parseBin(text):
@@ -19,7 +19,7 @@ def unparseBin(text):
 
 
 def parseBytesToBin(text, length=64):
-    hexString = hexlify(text.encode("cp500"))
+    hexString = hexlify(text)
     binString = bin(int(hexString, 16))[2:].zfill(length)
     return binString
 
@@ -27,10 +27,10 @@ def parseBytesToBin(text, length=64):
 def unparseBytesToBin(text, length=64):
     hexString = hex(int(text, 2))[2:]
     byteString = unhexlify(hexString.zfill(length//4))
-    return byteString.decode("cp500")
+    return byteString
 
 
-def parseSubelementScheme(text):
+def parseSubelements(text):
     json = {
         "SE00": text[0]
     }
@@ -42,7 +42,7 @@ def parseSubelementScheme(text):
     return json
 
 
-def unparseSubelementScheme(text):
+def unparseSubelements(text):
     json = deepcopy(text)
     string = json.pop("SE00")
     for key, value in sorted(json.items()):
@@ -52,20 +52,20 @@ def unparseSubelementScheme(text):
     return string
 
 
-def parsePdsScheme(text):
+def parsePds(text):
     json = {}
     while text:
-        key, length, text = text[0:4], int(text[4:8]), text[8:]
+        key, length, text = text[0:4], int(text[4:7]), text[7:]
         value, text = text[0:length], text[length:]
-        json["PDS" + key.zfill(4)] = value
+        json["PDS" + key.zfill(4).decode()] = value.decode()
     return json
 
 
-def unparsePdsScheme(text):
+def unparsePds(text):
     json = deepcopy(text)
-    string = ""
+    byteString = b""
     for key, value in sorted(json.items()):
         key = key.replace("PDS", "")
-        length = len(value)
-        string += key + str(length).zfill(4) + value
-    return string
+        length = str(len(value)).zfill(3)
+        byteString += key.encode() + length.encode() + value.encode()
+    return byteString

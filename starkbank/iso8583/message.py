@@ -12,27 +12,30 @@ def getVersion(MTI):
 
 
 def parse(message, template=mastercard):
-    message, MTI = parseElement(message, elementId="MTI", template=template["1987"])
+    MTI, message, length = parseElement(message, elementId="MTI", template=template["1987"])
     version = getVersion(MTI)
-    message, result = loopMessage(message, template[version])
+    result, message, length = loopMessage(message, length, template[version])
     json = dict(MTI=MTI, BMP=result.pop("DE000"))
     json.update(result)
+    json["Length"] = length
     return json
 
 
-def loopMessage(message, template):
+def loopMessage(message, length, template):
     result = {}
     indexes = [0]
     for number in indexes:
         id = getElementId(number)
         if isBitmap(id):
-            message, additionalIndexes = parseBitmap(message, elementId=id, template=template)
+            message, additionalIndexes, delta = parseBitmap(message, elementId=id, template=template)
+            length += delta
             result.update({id: additionalIndexes})
             indexes.extend(additionalIndexes)
             continue
-        message, value = parseElement(message, elementId=id, template=template)
+        value, message, delta = parseElement(message, elementId=id, template=template)
+        length += delta
         result[id] = value
-    return message, result
+    return result, message, length
 
 
 def parseElement(message, elementId, template):
@@ -43,7 +46,9 @@ def parseElement(message, elementId, template):
         message = message[rule["type"]:]
     result = rule["parser"](message[:size])
     partial = message[size:]
-    return partial, result
+    size = rule["type"] + size
+    print(result, size, partial)
+    return result, partial, size
 
 
 def parseBitmap(message, elementId, template):
@@ -53,11 +58,11 @@ def parseBitmap(message, elementId, template):
     partial = message[size:]
     offset = 64 if elementNumber(elementId) else 0
     result = Binary.toIndexes(binary, offset=offset)
-    return partial, result
+    return partial, result, 8
 
 
 def unparse(parsed, template=mastercard):
-    output = ""
+    output = b""
     version = getVersion(parsed["MTI"])
     elementIds = sorted(key for key in set(parsed) if "DE" in key)
     index = bisectLeft(elementIds, "DE065")
@@ -87,7 +92,7 @@ def unparseElement(json, elementId, template):
     size = rule["limit"]
     unparsed = rule["unparser"](data)[:size]
     if rule["type"]:
-        return str(len(unparsed)).zfill(rule["type"]) + unparsed
+        return (str(len(unparsed)).zfill(rule["type"]).encode() + unparsed)
     if len(unparsed) != size:
         raise ValueError("{elementId}: Expected length {lenExpected}, got {lenActual}".format(
             elementId=elementId,
