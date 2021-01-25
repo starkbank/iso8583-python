@@ -1,4 +1,5 @@
 from bisect import bisect_left as bisectLeft
+from . import encoding
 from .mastercard import mastercard
 from .utils.binary import Binary
 
@@ -27,7 +28,7 @@ def loopMessage(message, length, template):
     for number in indexes:
         id = getElementId(number)
         if isBitmap(id):
-            message, additionalIndexes, delta = parseBitmap(message, elementId=id, template=template)
+            additionalIndexes, message, delta = parseBitmap(message, elementId=id, template=template)
             length += delta
             result.update({id: additionalIndexes})
             indexes.extend(additionalIndexes)
@@ -42,12 +43,21 @@ def parseElement(message, elementId, template):
     rule = template[elementId]
     size = rule["limit"]
     if rule["type"]:
-        size = min(rule["limit"], int(message[:rule["type"]] or 0))
+        parseSize = int(message[:rule["type"]].decode(encoding) or 0)
+        size = min(size, parseSize)
+        if parseSize > size:
+            raise ValueError(
+                "Expected a maximum of {size} characters, got {parseSize} in {elementId} for message {message}".format(
+                    size=size,
+                    parseSize=parseSize,
+                    elementId=elementId,
+                    message=message,
+                )
+            )
         message = message[rule["type"]:]
     result = rule["parser"](message[:size])
     partial = message[size:]
     size = rule["type"] + size
-    print(result, size, partial)
     return result, partial, size
 
 
@@ -58,7 +68,7 @@ def parseBitmap(message, elementId, template):
     partial = message[size:]
     offset = 64 if elementNumber(elementId) else 0
     result = Binary.toIndexes(binary, offset=offset)
-    return partial, result, 8
+    return result, partial, 8
 
 
 def unparse(parsed, template=mastercard):
@@ -92,7 +102,7 @@ def unparseElement(json, elementId, template):
     size = rule["limit"]
     unparsed = rule["unparser"](data)[:size]
     if rule["type"]:
-        return str(len(unparsed)).zfill(rule["type"]).encode() + unparsed
+        return str(len(unparsed)).zfill(rule["type"]).encode(encoding) + unparsed
     if len(unparsed) != size:
         raise ValueError("{elementId}: Expected length {lenExpected}, got {lenActual}".format(
             elementId=elementId,
