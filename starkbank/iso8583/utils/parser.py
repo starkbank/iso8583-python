@@ -1,22 +1,23 @@
-from binascii import hexlify, unhexlify
+from base64 import b64encode, b64decode
 from copy import deepcopy
-from starkbank.iso8583 import encoding
+from binascii import hexlify, unhexlify
+from starkbank import iso8583
 
 
 def parseString(text):
-    return text.decode(encoding)
+    return text.decode(iso8583.encoding)
 
 
 def unparseString(text):
-    return text.encode(encoding)
+    return text.encode(iso8583.encoding)
 
 
 def parseBin(text):
-    return text
+    return b64encode(text)
 
 
 def unparseBin(text):
-    return text
+    return b64decode(text)
 
 
 def parseBytesToBin(text, length=64):
@@ -33,31 +34,31 @@ def unparseBytesToBin(text, length=64):
 
 def parseSubelements(text):
     json = {
-        "SE00": text[0:1].decode(encoding)
+        "SE00": text[0:1].decode(iso8583.encoding)
     }
     text = text[1:]
     while text:
-        key, length, text = text[0:2].decode(encoding), int(text[2:4].decode(encoding)), text[4:]
-        value, text = text[0:length].decode(encoding), text[length:]
+        key, length, text = text[0:2].decode(iso8583.encoding), int(text[2:4].decode(iso8583.encoding)), text[4:]
+        value, text = text[0:length].decode(iso8583.encoding), text[length:]
         json["SE" + key.zfill(2)] = value
     return json
 
 
 def unparseSubelements(text):
     json = deepcopy(text)
-    string = json.pop("SE00").encode(encoding)
+    string = json.pop("SE00").encode(iso8583.encoding)
     for key, value in sorted(json.items()):
         key = key.replace("SE", "")
         length = len(value)
-        string += key.encode(encoding) + str(length).zfill(2).encode(encoding) + value.encode(encoding)
+        string += key.encode(iso8583.encoding) + str(length).zfill(2).encode(iso8583.encoding) + value.encode(iso8583.encoding)
     return string
 
 
 def parsePds(text):
     json = {}
     while text:
-        key, length, text = text[0:4].decode(encoding), int(text[4:7].decode(encoding)), text[7:]
-        value, text = text[0:length].decode(encoding), text[length:]
+        key, length, text = text[0:4].decode(iso8583.encoding), int(text[4:7].decode(iso8583.encoding)), text[7:]
+        value, text = text[0:length].decode(iso8583.encoding), text[length:]
         json["PDS" + key.zfill(4)] = value
     return json
 
@@ -68,5 +69,5 @@ def unparsePds(text):
     for key, value in sorted(json.items()):
         key = key.replace("PDS", "")
         length = str(len(value)).zfill(3)
-        byteString += key.encode(encoding) + length.encode(encoding) + value.encode(encoding)
+        byteString += key.encode(iso8583.encoding) + length.encode(iso8583.encoding) + value.encode(iso8583.encoding)
     return byteString
