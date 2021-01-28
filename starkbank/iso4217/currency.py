@@ -279,6 +279,7 @@ iso4217 = [
     {'country.name': 'ZZ11_Silver', 'currency.code': 'XAG', 'currency.digits': 'N.A.', 'currency.number': '961', 'currency.name': 'Silver'},
 ]
 
+
 def number(code):
     iso4217ByCode = {
         currency["currency.code"]: currency
@@ -293,5 +294,3 @@ def code(number):
         for currency in iso4217
     }
     return iso4217ByNumber.get(number, {}).get("currency.code")
-
-
