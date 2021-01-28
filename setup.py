@@ -15,7 +15,7 @@ setup(
     author="Stark Bank",
     author_email="developers@starkbank.com",
     keywords=["iso8583", "credit card", "debit card", "mastercard", "visa"],
-    version="0.1.3"
+    version="0.2.0"
 )
 
 """
@@ -69,7 +69,7 @@ For unit test:
 python -m unittest discover -s febraban/cnab240/tests -p '*Test.py'
 ```
 
-For release a new version:
+To release a new version:
 
 ```
 python setup.py sdist upload -r pypi`` inside the project
