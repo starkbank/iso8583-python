@@ -1,7 +1,7 @@
 from bisect import bisect_left as bisectLeft
-from starkbank import iso8583
 from .mastercard import mastercard
 from .utils.binary import Binary
+from . import getEncoding
 
 
 def getVersion(MTI):
@@ -12,7 +12,7 @@ def getVersion(MTI):
     try:
         return versionMap[MTI[0]]
     except KeyError:
-        raise ValueError("Expected '0' or '1' in MTI[0] (Actual {MTI}), please check message iso8583.encoding".format(MTI=MTI))
+        raise ValueError("Expected '0' or '1' in MTI[0] (Actual: {MTI}), please check iso8583.encoding".format(MTI=MTI))
 
 
 def parse(message, template=mastercard):
@@ -46,7 +46,7 @@ def parseElement(message, elementId, template):
     rule = template[elementId]
     size = rule["limit"]
     if rule["type"]:
-        parseSize = int(message[:rule["type"]].decode(iso8583.encoding) or 0)
+        parseSize = int(message[:rule["type"]].decode(getEncoding()) or 0)
         size = min(size, parseSize)
         if parseSize > size:
             raise ValueError(
@@ -105,7 +105,7 @@ def unparseElement(json, elementId, template):
     size = rule["limit"]
     unparsed = rule["unparser"](data)[:size]
     if rule["type"]:
-        return str(len(unparsed)).zfill(rule["type"]).encode(iso8583.encoding) + unparsed
+        return str(len(unparsed)).zfill(rule["type"]).encode(getEncoding()) + unparsed
     if len(unparsed) != size:
         raise ValueError("{elementId}: Expected length {lenExpected}, got {lenActual}".format(
             elementId=elementId,
