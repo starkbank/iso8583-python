@@ -1,6 +1,4 @@
-from starkbank.iso8583.utils import binary
-from unittest import TestCase, main
-
+from unittest import TestCase
 from starkbank.iso8583.utils.binary import Binary
 from tests.iso8583.utils.randomData import randomBits, randomHex
 

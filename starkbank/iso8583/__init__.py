@@ -1,4 +1,4 @@
-encoding = "cp500"
+encoding = "ascii"
 
 
 def getEncoding():
