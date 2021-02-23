@@ -32,7 +32,7 @@ def unparseBytesToBin(text, length=64):
     return byteString
 
 
-def parseSubelements(text):
+def parseDE048(text):
     json = {
         "SE00": text[0:1].decode(getEncoding())
     }
@@ -44,13 +44,32 @@ def parseSubelements(text):
     return json
 
 
-def unparseSubelements(text):
+def unparseDE048(text):
     json = deepcopy(text)
     string = json.pop("SE00").encode(getEncoding())
     for key, value in sorted(json.items()):
         key = key.replace("SE", "")
         length = len(value)
         string += key.encode(getEncoding()) + str(length).zfill(2).encode(getEncoding()) + value.encode(getEncoding())
+    return string
+
+
+def parseDE112(text):
+    json = {}
+    while text:
+        key, length, text = text[0:3].decode(getEncoding()), int(text[3:6].decode(getEncoding())), text[6:]
+        value, text = text[0:length].decode(getEncoding()), text[length:]
+        json["SE" + key.zfill(3)] = value
+    return json
+
+
+def unparseDE112(text):
+    json = deepcopy(text)
+    string = ""
+    for key, value in sorted(json.items()):
+        key = key.replace("SE", "")
+        length = len(value)
+        string += key.encode(getEncoding()) + str(length).zfill(3).encode(getEncoding()) + value.encode(getEncoding())
     return string
 
 
