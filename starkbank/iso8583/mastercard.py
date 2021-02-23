@@ -1,6 +1,6 @@
 from .utils.enum import LengthType
-from .utils.parser import parseString, parseBytesToBin, parseSubelements, parsePds, parseBin
-from .utils.parser import unparseString, unparseBytesToBin, unparseSubelements, unparsePds, unparseBin
+from .utils.parser import parseString, parseBytesToBin, parseDE048, parseDE112, parsePds, parseBin
+from .utils.parser import unparseString, unparseBytesToBin, unparseDE048, unparseDE112, unparsePds, unparseBin
 
 
 mastercard = {"1987": {
@@ -53,7 +53,7 @@ mastercard = {"1987": {
     "DE045": {"type": LengthType.LLVAR, "limit": 76, "parser": parseString, "unparser": unparseString},
     "DE046": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE047": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
-    "DE048": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseSubelements, "unparser": unparseSubelements},
+    "DE048": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseDE048, "unparser": unparseDE048},
     "DE049": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
     "DE050": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
     "DE051": {"type": LengthType.FIXED, "limit": 3, "parser": parseString, "unparser": unparseString},
@@ -117,7 +117,7 @@ mastercard = {"1987": {
     "DE109": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE110": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE111": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
-    "DE112": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
+    "DE112": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseDE112, "unparser": unparseDE112},
     "DE113": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE114": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
     "DE115": {"type": LengthType.LLLVAR, "limit": 999, "parser": parseString, "unparser": unparseString},
