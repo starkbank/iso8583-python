@@ -80,10 +80,12 @@ def unparse(parsed, template=mastercard):
     elementIds = sorted(key for key in set(parsed) if "DE" in key)
     index = bisectLeft(elementIds, "DE065")
     finalIndex = bisectLeft(elementIds, "DE129")
-    BMP = elementIds[:index]
-    BMS = elementIds[index:finalIndex]
     if finalIndex > index and "DE001" not in elementIds:
         insort(elementIds, "DE001")
+        index += 1
+        finalIndex += 1
+    BMP = elementIds[:index]
+    BMS = elementIds[index:finalIndex]
     output += unparseElement(parsed, elementId="MTI", template=template[version])
     output += unparseBitmap(BMP, elementId="DE000", template=template[version])
     for id in elementIds:
