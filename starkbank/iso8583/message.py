@@ -1,4 +1,4 @@
-from bisect import bisect_left as bisectLeft
+from bisect import bisect_left as bisectLeft, insort
 from .mastercard import mastercard
 from .utils.binary import Binary
 from . import getEncoding
@@ -82,6 +82,8 @@ def unparse(parsed, template=mastercard):
     finalIndex = bisectLeft(elementIds, "DE129")
     BMP = elementIds[:index]
     BMS = elementIds[index:finalIndex]
+    if finalIndex > index and "DE001" not in elementIds:
+        insort(elementIds, "DE001")
     output += unparseElement(parsed, elementId="MTI", template=template[version])
     output += unparseBitmap(BMP, elementId="DE000", template=template[version])
     for id in elementIds:
