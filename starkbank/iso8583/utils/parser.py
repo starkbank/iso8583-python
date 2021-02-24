@@ -27,7 +27,7 @@ def parseBytesToBin(text, length=64):
 
 
 def unparseBytesToBin(text, length=64):
-    hexString = hex(int(text, 2))[2:]
+    hexString = hex(int(text, 2))[2:].replace("L", "")
     byteString = unhexlify(hexString.zfill(length//4))
     return byteString
 
