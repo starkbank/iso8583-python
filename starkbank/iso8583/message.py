@@ -158,5 +158,5 @@ def breakPdsElement(PDS):
     json = {}
     pdsElements = iter(additionalDataElements)
     while PDS:
-        json[pdsElements.next()] = unparsePds(PDS)
+        json[next(pdsElements)] = unparsePds(PDS)
     return json
