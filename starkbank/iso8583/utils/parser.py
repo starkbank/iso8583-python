@@ -1,5 +1,4 @@
 from base64 import b64encode, b64decode
-from copy import deepcopy
 from binascii import hexlify, unhexlify
 from .. import getEncoding
 
@@ -33,60 +32,69 @@ def unparseBytesToBin(text, length=64):
 
 
 def parseDE048(text):
+    encoding = getEncoding()
     json = {
-        "SE00": text[0:1].decode(getEncoding())
+        "SE00": text[0:1].decode(encoding)
     }
     text = text[1:]
     while text:
-        key, length, text = text[0:2].decode(getEncoding()), int(text[2:4].decode(getEncoding())), text[4:]
-        value, text = text[0:length].decode(getEncoding()), text[length:]
+        key, length, text = text[0:2].decode(encoding), int(text[2:4].decode(encoding)), text[4:]
+        value, text = text[0:length].decode(encoding), text[length:]
         json["SE" + key.zfill(2)] = value
     return json
 
 
-def unparseDE048(text):
-    json = deepcopy(text)
-    string = json.pop("SE00").encode(getEncoding())
+def unparseDE048(data):
+    encoding = getEncoding()
+    json = data.copy()
+    string = json.pop("SE00").encode(encoding)
     for key, value in sorted(json.items()):
         key = key.replace("SE", "")
         length = len(value)
-        string += key.encode(getEncoding()) + str(length).zfill(2).encode(getEncoding()) + value.encode(getEncoding())
+        string += key.encode(encoding) + str(length).zfill(2).encode(encoding) + value.encode(encoding)
     return string
 
 
 def parseDE112(text):
+    encoding = getEncoding()
     json = {}
     while text:
-        key, length, text = text[0:3].decode(getEncoding()), int(text[3:6].decode(getEncoding())), text[6:]
-        value, text = text[0:length].decode(getEncoding()), text[length:]
+        key, length, text = text[0:3].decode(encoding), int(text[3:6].decode(encoding)), text[6:]
+        value, text = text[0:length].decode(encoding), text[length:]
         json["SE" + key.zfill(3)] = value
     return json
 
 
-def unparseDE112(text):
-    json = deepcopy(text)
+def unparseDE112(data):
+    encoding = getEncoding()
+    json = data.copy()
     string = ""
     for key, value in sorted(json.items()):
         key = key.replace("SE", "")
         length = len(value)
-        string += key.encode(getEncoding()) + str(length).zfill(3).encode(getEncoding()) + value.encode(getEncoding())
+        string += key.encode(encoding) + str(length).zfill(3).encode(encoding) + value.encode(encoding)
     return string
 
 
 def parsePds(text):
+    encoding = getEncoding()
     json = {}
     while text:
-        key, length, text = text[0:4].decode(getEncoding()), int(text[4:7].decode(getEncoding())), text[7:]
-        value, text = text[0:length].decode(getEncoding()), text[length:]
-        json["PDS" + key.zfill(4)] = value
+        tag, length, text = text[0:4].decode(encoding), int(text[4:7].decode(encoding)), text[7:]
+        value, text = text[0:length].decode(encoding), text[length:]
+        json["PDS" + tag.zfill(4)] = value
     return json
 
 
-def unparsePds(text):
-    json = deepcopy(text)
+def unparsePds(json):
+    encoding = getEncoding()
     byteString = b""
     for key, value in sorted(json.items()):
-        key = key.replace("PDS", "")
+        tag = key.replace("PDS", "")
         length = str(len(value)).zfill(3)
-        byteString += key.encode(getEncoding()) + length.encode(getEncoding()) + value.encode(getEncoding())
+        partial = tag.encode(encoding) + length.encode(encoding) + value.encode(encoding)
+        if len(byteString + partial) > 999:
+            break
+        byteString += partial
+        json.pop(key)
     return byteString
