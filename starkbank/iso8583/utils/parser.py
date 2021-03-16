@@ -77,24 +77,22 @@ def unparseDE112(data):
 
 
 def parsePds(text):
-    encoding = getEncoding()
     json = {}
     while text:
-        tag, length, text = text[0:4].decode(encoding), int(text[4:7].decode(encoding)), text[7:]
-        value, text = text[0:length].decode(encoding), text[length:]
+        tag, length, text = text[0:4], int(text[4:7]), text[7:]
+        value, text = text[0:length], text[length:]
         json["PDS" + tag.zfill(4)] = value
     return json
 
 
 def unparsePds(json):
-    encoding = getEncoding()
-    byteString = b""
+    string = ""
     for key, value in sorted(json.items()):
         tag = key.replace("PDS", "")
         length = str(len(value)).zfill(3)
-        partial = tag.encode(encoding) + length.encode(encoding) + value.encode(encoding)
-        if len(byteString + partial) > 999:
+        partial = tag + length + value
+        if len(string + partial) > 999:
             break
-        byteString += partial
+        string += partial
         json.pop(key)
-    return byteString
+    return string
