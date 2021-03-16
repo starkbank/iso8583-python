@@ -2,12 +2,14 @@ from bisect import bisect_left as bisectLeft, insort
 from .mastercard import mastercard
 from .utils.binary import Binary
 from . import getEncoding
+from .utils.parser import parsePds, unparsePds
+from .version import IsoVersion
 
 
 def getVersion(MTI):
     versionMap = {
-        "0": "1987",
-        "1": "1993",
+        "0": IsoVersion._1987,
+        "1": IsoVersion._1993,
     }
     try:
         return versionMap[MTI[0]]
@@ -16,11 +18,13 @@ def getVersion(MTI):
 
 
 def parse(message, template=mastercard):
-    MTI, message, length = parseElement(message, elementId="MTI", template=template["1987"])
+    MTI, message, length = parseElement(message, elementId="MTI", template=template[IsoVersion._1987])
     version = getVersion(MTI)
     result, message, length = loopMessage(message, length, template[version])
     json = dict(MTI=MTI, BMP=result.pop("DE000"))
     json.update(result)
+    if version == IsoVersion._1993:
+        json.update({"PDS": buildPdsElement(json)})
     json["Length"] = length
     return json
 
@@ -75,8 +79,11 @@ def parseBitmap(message, elementId, template):
 
 
 def unparse(parsed, template=mastercard):
+    parsed = dict(parsed)
     output = b""
     version = getVersion(parsed["MTI"])
+    if version == IsoVersion._1993:
+        parsed.update(breakPdsElement(parsed["PDS"]))
     elementIds = sorted(key for key in set(parsed) if "DE" in key)
     index = bisectLeft(elementIds, "DE065")
     finalIndex = bisectLeft(elementIds, "DE129")
@@ -134,3 +141,28 @@ def elementNumber(elementId):
 
 def getElementId(number):
     return "DE" + str(number).zfill(3)
+
+
+def additionalDataElements():
+    return "DE048", "DE062", "DE123", "DE124", "DE125"
+
+
+def pdsElementGenerator():
+    for de in additionalDataElements():
+        yield de
+
+
+def buildPdsElement(json):
+    PDS = {}
+    for de in additionalDataElements():
+        PDS.update(parsePds(json.get(de, "")))
+    return PDS
+
+
+def breakPdsElement(PDS):
+    PDS = dict(PDS)
+    json = {}
+    pdsElements = pdsElementGenerator()
+    while PDS:
+        json[pdsElements.next()] = unparsePds(PDS)
+    return json

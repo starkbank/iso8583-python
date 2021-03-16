@@ -44,8 +44,8 @@ def parseDE048(text):
     return json
 
 
-def unparseDE048(text):
-    json = deepcopy(text)
+def unparseDE048(data):
+    json = deepcopy(data)
     string = json.pop("SE00").encode(getEncoding())
     for key, value in sorted(json.items()):
         key = key.replace("SE", "")
@@ -63,8 +63,8 @@ def parseDE112(text):
     return json
 
 
-def unparseDE112(text):
-    json = deepcopy(text)
+def unparseDE112(data):
+    json = deepcopy(data)
     string = ""
     for key, value in sorted(json.items()):
         key = key.replace("SE", "")
@@ -76,17 +76,20 @@ def unparseDE112(text):
 def parsePds(text):
     json = {}
     while text:
-        key, length, text = text[0:4].decode(getEncoding()), int(text[4:7].decode(getEncoding())), text[7:]
+        tag, length, text = text[0:4].decode(getEncoding()), int(text[4:7].decode(getEncoding())), text[7:]
         value, text = text[0:length].decode(getEncoding()), text[length:]
-        json["PDS" + key.zfill(4)] = value
+        json["PDS" + tag.zfill(4)] = value
     return json
 
 
-def unparsePds(text):
-    json = deepcopy(text)
+def unparsePds(json):
     byteString = b""
     for key, value in sorted(json.items()):
-        key = key.replace("PDS", "")
+        tag = key.replace("PDS", "")
         length = str(len(value)).zfill(3)
-        byteString += key.encode(getEncoding()) + length.encode(getEncoding()) + value.encode(getEncoding())
+        partial = tag.encode(getEncoding()) + length.encode(getEncoding()) + value.encode(getEncoding())
+        if len(byteString + partial) > 999:
+            break
+        byteString += partial
+        json.pop(key)
     return byteString
