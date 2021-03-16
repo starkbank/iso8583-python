@@ -6,6 +6,9 @@ from .utils.parser import parsePds, unparsePds
 from .version import IsoVersion
 
 
+additionalDataElements = "DE048", "DE062", "DE123", "DE124", "DE125"
+
+
 def getVersion(MTI):
     versionMap = {
         "0": IsoVersion._1987,
@@ -79,7 +82,7 @@ def parseBitmap(message, elementId, template):
 
 
 def unparse(parsed, template=mastercard):
-    parsed = dict(parsed)
+    parsed = parsed.copy()
     output = b""
     version = getVersion(parsed["MTI"])
     if version == IsoVersion._1993:
@@ -143,26 +146,17 @@ def getElementId(number):
     return "DE" + str(number).zfill(3)
 
 
-def additionalDataElements():
-    return "DE048", "DE062", "DE123", "DE124", "DE125"
-
-
-def pdsElementGenerator():
-    for de in additionalDataElements():
-        yield de
-
-
 def buildPdsElement(json):
     PDS = {}
-    for de in additionalDataElements():
+    for de in additionalDataElements:
         PDS.update(parsePds(json.get(de, "")))
     return PDS
 
 
 def breakPdsElement(PDS):
-    PDS = dict(PDS)
+    PDS = PDS.copy()
     json = {}
-    pdsElements = pdsElementGenerator()
+    pdsElements = iter(additionalDataElements)
     while PDS:
         json[pdsElements.next()] = unparsePds(PDS)
     return json
