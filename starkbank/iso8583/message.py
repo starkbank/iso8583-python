@@ -53,8 +53,14 @@ def parseElement(message, elementId, template):
     rule = template[elementId]
     size = rule["limit"]
     if rule["type"]:
+        if len(message) < rule["type"]:
+            raise ValueError("expected length {expected}, got {got} in message {elementId}: {message}".format(
+                expected=rule["type"],
+                got=len(message),
+                elementId=elementId,
+                message=message,
+            ))
         parseSize = int(message[:rule["type"]].decode(getEncoding()) or 0)
-        size = min(size, parseSize)
         if parseSize > size:
             raise ValueError(
                 "Expected a maximum of {size} characters, got {parseSize} in {elementId} for message {message}".format(
@@ -64,19 +70,33 @@ def parseElement(message, elementId, template):
                     message=message,
                 )
             )
+        size = parseSize
         message = message[rule["type"]:]
-    result = rule["parser"](message[:size])
-    partial = message[size:]
-    size = rule["type"] + size
-    return result, partial, size
+    element, partial = message[:size], message[size:]
+    if size != len(element):
+        raise ValueError("expected length {expected}, got {got} in element {elementId}: {element}".format(
+            expected=size,
+            got=len(element),
+            elementId=elementId,
+            element=element,
+        ))
+    result = rule["parser"](element)
+    return result, partial, rule["type"] + size
 
 
 def parseBitmap(message, elementId, template):
     rule = template[elementId]
     size = rule["limit"]
-    binary = rule["parser"](message[:size])
-    partial = message[size:]
+    bytemap, partial = message[:size], message[size:]
+    binary = rule["parser"](bytemap)
     offset = 64 if elementNumber(elementId) else 0
+    if len(bytemap) != 8:
+        raise ValueError("expected length {expected}, got {got} in bitmap {elementId}: {bytemap}".format(
+            expected=8,
+            got=len(bytemap),
+            elementId=elementId,
+            bytemap=bytemap,
+        ))
     result = Binary.toIndexes(binary, offset=offset)
     return result, partial, 8
 
