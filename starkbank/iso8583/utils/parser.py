@@ -3,36 +3,36 @@ from binascii import hexlify, unhexlify
 from .. import getEncoding
 
 
-def parseString(text):
-    return text.decode(getEncoding())
+def parseString(text, encoding=None):
+    return text.decode(encoding or getEncoding())
 
 
-def unparseString(text):
-    return text.encode(getEncoding())
+def unparseString(text, encoding=None):
+    return text.encode(encoding or getEncoding())
 
 
-def parseBin(text):
+def parseBin(text, encoding=None):
     return b64encode(text)
 
 
-def unparseBin(text):
+def unparseBin(text, encoding=None):
     return b64decode(text)
 
 
-def parseBytesToBin(text, length=64):
+def parseBytesToBin(text, encoding=None, length=64):
     hexString = hexlify(text)
     binString = bin(int(hexString, 16))[2:].zfill(length)
     return binString
 
 
-def unparseBytesToBin(text, length=64):
+def unparseBytesToBin(text, encoding=None, length=64):
     hexString = hex(int(text, 2))[2:].replace("L", "")
     byteString = unhexlify(hexString.zfill(length//4))
     return byteString
 
 
-def parseDE048(text):
-    encoding = getEncoding()
+def parseDE048(text, encoding=None):
+    encoding = encoding or getEncoding()
     json = {
         "SE00": text[0:1].decode(encoding)
     }
@@ -44,8 +44,8 @@ def parseDE048(text):
     return json
 
 
-def unparseDE048(data):
-    encoding = getEncoding()
+def unparseDE048(data, encoding=None):
+    encoding = encoding or getEncoding()
     json = data.copy()
     string = json.pop("SE00").encode(encoding)
     for key, value in sorted(json.items()):
@@ -55,8 +55,8 @@ def unparseDE048(data):
     return string
 
 
-def parseDE112(text):
-    encoding = getEncoding()
+def parseDE112(text, encoding=None):
+    encoding = encoding or getEncoding()
     json = {}
     while text:
         key, length, text = text[0:3].decode(encoding), int(text[3:6].decode(encoding)), text[6:]
@@ -65,8 +65,8 @@ def parseDE112(text):
     return json
 
 
-def unparseDE112(data):
-    encoding = getEncoding()
+def unparseDE112(data, encoding=None):
+    encoding = encoding or getEncoding()
     json = data.copy()
     string = ""
     for key, value in sorted(json.items()):
