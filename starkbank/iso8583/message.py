@@ -20,10 +20,10 @@ def getVersion(MTI):
         raise ValueError("Expected '0' or '1' in MTI[0] (Actual: {MTI}), please check iso8583.encoding".format(MTI=MTI))
 
 
-def parse(message, template=mastercard):
-    MTI, message, length = parseElement(message, elementId="MTI", template=template[IsoVersion._1987])
+def parse(message, template=mastercard, encoding=None):
+    MTI, message, length = parseElement(message, elementId="MTI", template=template[IsoVersion._1987], encoding=encoding)
     version = getVersion(MTI)
-    result, message, length = loopMessage(message, length, template[version])
+    result, message, length = loopMessage(message, length, template[version], encoding=encoding)
     json = dict(MTI=MTI, BMP=result.pop("DE000"))
     json.update(result)
     if version == IsoVersion._1993:
@@ -32,7 +32,7 @@ def parse(message, template=mastercard):
     return json
 
 
-def loopMessage(message, length, template):
+def loopMessage(message, length, template, encoding=None):
     result = {}
     indexes = [0]
     for number in indexes:
@@ -43,13 +43,13 @@ def loopMessage(message, length, template):
             result.update({id: additionalIndexes})
             indexes.extend(additionalIndexes)
             continue
-        value, message, delta = parseElement(message, elementId=id, template=template)
+        value, message, delta = parseElement(message, elementId=id, template=template, encoding=encoding)
         length += delta
         result[id] = value
     return result, message, length
 
 
-def parseElement(message, elementId, template):
+def parseElement(message, elementId, template, encoding=None):
     rule = template[elementId]
     size = rule["limit"]
     if rule["type"]:
@@ -60,7 +60,7 @@ def parseElement(message, elementId, template):
                 elementId=elementId,
                 message=message,
             ))
-        parseSize = int(message[:rule["type"]].decode(getEncoding()) or 0)
+        parseSize = int(message[:rule["type"]].decode(encoding or getEncoding()) or 0)
         if parseSize > size:
             raise ValueError(
                 "Expected a maximum of {size} characters, got {parseSize} in {elementId} for message {message}".format(
@@ -80,7 +80,7 @@ def parseElement(message, elementId, template):
             elementId=elementId,
             element=element,
         ))
-    result = rule["parser"](element)
+    result = rule["parser"](element, encoding=encoding)
     return result, partial, rule["type"] + size
 
 
@@ -101,7 +101,7 @@ def parseBitmap(message, elementId, template):
     return result, partial, 8
 
 
-def unparse(parsed, template=mastercard):
+def unparse(parsed, template=mastercard, encoding=None):
     parsed = parsed.copy()
     output = b""
     version = getVersion(parsed["MTI"])
@@ -116,13 +116,13 @@ def unparse(parsed, template=mastercard):
         finalIndex += 1
     BMP = elementIds[:index]
     BMS = elementIds[index:finalIndex]
-    output += unparseElement(parsed, elementId="MTI", template=template[version])
+    output += unparseElement(parsed, elementId="MTI", template=template[version], encoding=encoding)
     output += unparseBitmap(BMP, elementId="DE000", template=template[version])
     for id in elementIds:
         if isBitmap(id):
             output += unparseBitmap(BMS, elementId=id, template=template[version])
             continue
-        output += unparseElement(parsed, elementId=id, template=template[version])
+        output += unparseElement(parsed, elementId=id, template=template[version], encoding=encoding)
     return output
 
 
@@ -133,13 +133,13 @@ def unparseBitmap(keys, elementId, template):
     return rule["unparser"](binaryString)
 
 
-def unparseElement(json, elementId, template):
+def unparseElement(json, elementId, template, encoding=None):
     data = json[elementId]
     rule = template[elementId]
     size = rule["limit"]
-    unparsed = rule["unparser"](data)[:size]
+    unparsed = rule["unparser"](data, encoding=encoding)[:size]
     if rule["type"]:
-        return str(len(unparsed)).zfill(rule["type"]).encode(getEncoding()) + unparsed
+        return str(len(unparsed)).zfill(rule["type"]).encode(encoding or getEncoding()) + unparsed
     if len(unparsed) != size:
         raise ValueError("{elementId}: Expected length {lenExpected}, got {lenActual}".format(
             elementId=elementId,
