@@ -1,7 +1,10 @@
 from bisect import bisect_left as bisectLeft, insort
-from .mastercard import mastercard
-from .utils.binary import Binary
+from starkbank.iso8583.template.mastercard import mastercard
+from starkbank.iso8583.utils.binary import Binary
+from starkbank.iso8583.utils.enum import Encoding, PaddingDirection, LengthType
+from .utils.integer import Integer
 from . import getEncoding
+from .utils.length import getLengthBytesLength, parseLength, getDataLengthFromDataEncoding, unparseLength
 from .utils.parser import parsePds, unparsePds
 from .version import IsoVersion
 
@@ -20,11 +23,19 @@ def getVersion(MTI):
         raise ValueError("Expected '0' or '1' in MTI[0] (Actual: {MTI}), please check iso8583.encoding".format(MTI=MTI))
 
 
-def parse(message, template=mastercard, encoding=None):
-    MTI, message, length = parseElement(message, elementId="MTI", template=template[IsoVersion._1987], encoding=encoding)
+def parse(message, template=mastercard):
+    json = {}
+
+    headerRule = template[IsoVersion._1987].get("Header")
+    if headerRule:
+        headers, message = headerRule["parser"](message)
+        json.update(headers)
+
+    MTI, message, length = parseElement(message, elementId="MTI", template=template[IsoVersion._1987])
     version = getVersion(MTI)
-    result, message, length = loopMessage(message, length, template[version], encoding=encoding)
-    json = dict(MTI=MTI, BMP=result.pop("DE000"))
+
+    result, message, length = loopMessage(message, length, template[version])
+    json.update(MTI=MTI, BMP=result.pop("DE000"))
     json.update(result)
     if version == IsoVersion._1993:
         json.update({"PDS": buildPdsElement(json)})
@@ -32,35 +43,37 @@ def parse(message, template=mastercard, encoding=None):
     return json
 
 
-def loopMessage(message, length, template, encoding=None):
+def loopMessage(message, length, template):
     result = {}
     indexes = [0]
     for number in indexes:
         id = getElementId(number)
         if isBitmap(id):
-            additionalIndexes, message, delta = parseBitmap(message, elementId=id, template=template)
-            length += delta
-            result.update({id: additionalIndexes})
+            additionalIndexes, message, parsedLength = parseBitmap(message, elementId=id, template=template)
+            length += parsedLength
+            result[id] = additionalIndexes
             indexes.extend(additionalIndexes)
             continue
-        value, message, delta = parseElement(message, elementId=id, template=template, encoding=encoding)
-        length += delta
+        value, message, parsedLength = parseElement(message, elementId=id, template=template)
+        length += parsedLength
         result[id] = value
     return result, message, length
 
 
-def parseElement(message, elementId, template, encoding=None):
+def parseElement(message, elementId, template):
     rule = template[elementId]
     size = rule["limit"]
-    if rule["type"]:
-        if len(message) < rule["type"]:
+
+    lengthBytes = getLengthBytesLength(lengthType=rule["lengthType"], encoding=rule["lengthEncoding"])  # TODO: come up with a better name
+    if lengthBytes:
+        if len(message) < lengthBytes:
             raise ValueError("expected length {expected}, got {got} in message {elementId}: {message}".format(
-                expected=rule["type"],
+                expected=lengthBytes,
                 got=len(message),
                 elementId=elementId,
                 message=message,
             ))
-        parseSize = int(message[:rule["type"]].decode(encoding or getEncoding()) or 0)
+        parseSize = parseLength(lengthData=message[:lengthBytes], lengthEncoding=rule["lengthEncoding"])
         if parseSize > size:
             raise ValueError(
                 "Expected a maximum of {size} characters, got {parseSize} in {elementId} for message {message}".format(
@@ -71,17 +84,24 @@ def parseElement(message, elementId, template, encoding=None):
                 )
             )
         size = parseSize
-        message = message[rule["type"]:]
-    element, partial = message[:size], message[size:]
-    if size != len(element):
+        message = message[lengthBytes:]
+
+    dataLength = getDataLengthFromDataEncoding(parseSize=size, dataEncoding=rule["dataEncoding"])
+    element, partial = message[:dataLength], message[dataLength:]
+    if dataLength != len(element):
         raise ValueError("expected length {expected}, got {got} in element {elementId}: {element}".format(
-            expected=size,
+            expected=dataLength,
             got=len(element),
             elementId=elementId,
             element=element,
         ))
-    result = rule["parser"](element, encoding=encoding)
-    return result, partial, rule["type"] + size
+    result = rule["parser"](element, encoding=rule["dataEncoding"])
+
+    unpadMethod = rule.get("unpad")
+    if unpadMethod:
+        result = unpadMethod(element=result, length=size)
+
+    return result, partial, lengthBytes + dataLength
 
 
 def parseBitmap(message, elementId, template):
@@ -101,28 +121,37 @@ def parseBitmap(message, elementId, template):
     return result, partial, 8
 
 
-def unparse(parsed, template=mastercard, encoding=None):
+def unparse(parsed, template=mastercard):
     parsed = parsed.copy()
     output = b""
+
+    headerRule = template[IsoVersion._1987].get("Header")
+    if headerRule:
+        output += headerRule["unparser"](parsed)
+
     version = getVersion(parsed["MTI"])
     if version == IsoVersion._1993:
         parsed.update(breakPdsElement(parsed["PDS"]))
+
     elementIds = sorted(key for key in set(parsed) if "DE" in key)
     index = bisectLeft(elementIds, "DE065")
     finalIndex = bisectLeft(elementIds, "DE129")
+
     if finalIndex > index and "DE001" not in elementIds:
         insort(elementIds, "DE001")
         index += 1
         finalIndex += 1
+
     BMP = elementIds[:index]
     BMS = elementIds[index:finalIndex]
-    output += unparseElement(parsed, elementId="MTI", template=template[version], encoding=encoding)
+
+    output += unparseElement(parsed, elementId="MTI", template=template[version])
     output += unparseBitmap(BMP, elementId="DE000", template=template[version])
     for id in elementIds:
         if isBitmap(id):
             output += unparseBitmap(BMS, elementId=id, template=template[version])
             continue
-        output += unparseElement(parsed, elementId=id, template=template[version], encoding=encoding)
+        output += unparseElement(parsed, elementId=id, template=template[version])
     return output
 
 
@@ -133,20 +162,50 @@ def unparseBitmap(keys, elementId, template):
     return rule["unparser"](binaryString)
 
 
-def unparseElement(json, elementId, template, encoding=None):
-    data = json[elementId]
+def unparseElement(json, elementId, template):
+    element = json[elementId]
     rule = template[elementId]
-    size = rule["limit"]
-    unparsed = rule["unparser"](data, encoding=encoding)[:size]
-    if rule["type"]:
-        return str(len(unparsed)).zfill(rule["type"]).encode(encoding or getEncoding()) + unparsed
-    if len(unparsed) != size:
+
+    lengthBytes = getDataLengthFromDataEncoding(parseSize=rule["limit"], dataEncoding=rule["dataEncoding"])
+
+    padMethod = rule.get("pad")
+    paddedLength = 0
+    if padMethod:
+        element, paddedLength = padMethod(element)
+
+    data = rule["unparser"](element, encoding=rule["dataEncoding"])[:lengthBytes]
+
+    elementLength = generateElementLength(
+        data=data,
+        element=element,
+        paddedLength=paddedLength,
+        lengthType=rule["lengthType"],
+        dataEncoding=rule["dataEncoding"],
+    )
+    lengthData = unparseLength(length=elementLength, lengthType=rule["lengthType"], lengthEncoding=rule["lengthEncoding"])
+
+    if not lengthData and len(data) != lengthBytes:
         raise ValueError("{elementId}: Expected length {lenExpected}, got {lenActual}".format(
             elementId=elementId,
-            lenExpected=size,
-            lenActual=len(unparsed)
+            lenExpected=lengthBytes,
+            lenActual=len(data)
         ))
-    return unparsed
+    return lengthData + data
+
+
+def generateElementLength(data, element, paddedLength, lengthType, dataEncoding):
+    length = 0
+    if lengthType == LengthType.fixed:
+        return length
+
+    if dataEncoding in [Encoding.cp500, Encoding.ascii]:
+        length = len(data)
+    if dataEncoding == Encoding.binary:
+        length = len(data)
+    if dataEncoding == Encoding.bcd:
+        length = len(element)
+
+    return length - paddedLength
 
 
 def getBitmap(json):

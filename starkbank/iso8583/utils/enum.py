@@ -1,8 +1,23 @@
 
 
+class Encoding:
+
+    bcd = "bcd"
+    cp500 = "cp500"
+    ascii = "ascii"
+    binary = "binary"
+
+
 class LengthType:
 
-    FIXED = 0
-    LVAR = 1
-    LLVAR = 2
-    LLLVAR = 3
+    fixed = "fixed"
+    lvar = "lvar"
+    llvar = "llvar"
+    lllvar = "lllvar"
+    llllvar = "llllvar"
+
+
+class PaddingDirection:
+
+    left = "left"
+    right = "right"
