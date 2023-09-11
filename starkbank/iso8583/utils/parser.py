@@ -76,37 +76,48 @@ def unparseDE048(element, encoding=None):
     return string
 
 
-def parseDE062(data, encoding=None):
-    from binascii import hexlify
-    print("DE062 data: {}".format(hexlify(data)))
-
-    bitmapLength = 8
-    hexString, data = hexlify(data[:bitmapLength]), data[bitmapLength:]
-    binString = bin(int(hexString, 16))[2:].zfill(8 * bitmapLength)
-    bitmap = Binary.toIndexes(binString)
+def _parseBitmapFormat(data, bitmapLength, template):
+    bitString, data = parseBitString(data[:bitmapLength]), data[bitmapLength:]
+    bitmap = Binary.toIndexes(bitString)
     json = {
         "SE00": bitmap,
     }
     for index in bitmap:
-        json.update({
-            "SE" + str(index).zfill(2): data.decode(Encoding.cp500),
-        })
+        subElementId = "SE" + str(index).zfill(2)
+        rule = template[subElementId]
+        subElementData, data = data[:rule["limit"]], data[rule["limit"]:]  # TODO: get limit according to encoding
+        json[subElementId] = rule["parser"](subElementData, encoding=rule["encoding"])  # TODO: treat padding
     return json
+
+
+def _unparseBitmapFormat(element, bitmapLength, template):
+    json = element.copy()
+    data = b""
+    indexes = []
+    for subElementId in sorted(json.keys()):
+        if subElementId == "SE00":
+            continue
+        indexes.append(int(subElementId.replace("SE", "")))
+        rule = template[subElementId]
+        data += rule["unparser"](json[subElementId], encoding=rule["encoding"])  # TODO: treat padding
+    data = unparseBitString(Binary.fromIndexes(indexes=indexes, length=8 * bitmapLength)) + data
+    return data
+
+
+def parseDE062(data, encoding=None):
+    return _parseBitmapFormat(data=data, bitmapLength=8, template=_de062Template)
+
+
+def unparseDE062(element, encoding=None):
+    return _unparseBitmapFormat(element=element, bitmapLength=8, template=_de062Template)
 
 
 def parseDE063(data, encoding=None):
-    bitmapLength = 3
-    hexString, data = hexlify(data[:bitmapLength]), data[bitmapLength:]
-    binString = bin(int(hexString, 16))[2:].zfill(8 * bitmapLength)
-    bitmap = Binary.toIndexes(binString)
-    json = {
-        "SE00": bitmap,
-    }
-    for index in bitmap:
-        json.update({
-            "SE" + str(index).zfill(2): hexlify(data)[-4:]
-        })
-    return json
+    return _parseBitmapFormat(data=data, bitmapLength=3, template=_de063Template)
+
+
+def unparseDE063(element, encoding=None):
+    return _unparseBitmapFormat(element=element, bitmapLength=3, template=_de063Template)
 
 
 def parseDE112(data, encoding=None):
@@ -150,3 +161,63 @@ def unparsePds(json):
         string += partial
         json.pop(key)
     return string
+
+
+_de062Template = {
+    "SE01": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE02": {"limit": 15, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE03": {"limit": 4, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE04": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE05": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE06": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE07": {"limit": 26, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE08": {"limit": 6, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE09": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE10": {"limit": 6, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE11": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE12": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE13": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE14": {"limit": 12, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE15": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE16": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE17": {"limit": 15, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE18": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE19": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE20": {"limit": 10, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE21": {"limit": 4, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE22": {"limit": 6, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE23": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE24": {"limit": 6, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE25": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE26": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+}
+
+
+_de063Template = {
+    "SE01": {"limit": 4, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE02": {"limit": 4, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE03": {"limit": 4, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE04": {"limit": 4, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE05": {"undefined": ""},
+    "SE06": {"limit": 7, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE07": {"limit": 8, "parser": parseBitString, "unparser": unparseBitString, "encoding": Encoding.binary},
+    "SE08": {"limit": 6, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE09": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE10": {"limit": 6, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE11": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE12": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE13": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE14": {"limit": 12, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE15": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE16": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE17": {"limit": 15, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE18": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE19": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE20": {"limit": 10, "parser": parseString, "unparser": unparseString, "encoding": Encoding.bcd},
+    "SE21": {"limit": 4, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE22": {"limit": 6, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE23": {"limit": 2, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE24": {"limit": 6, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE25": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+    "SE26": {"limit": 1, "parser": parseString, "unparser": unparseString, "encoding": Encoding.cp500},
+}
