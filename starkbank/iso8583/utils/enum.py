@@ -1,8 +1,7 @@
 
 
-class LengthType:
+class Encoding:
 
-    FIXED = 0
-    LVAR = 1
-    LLVAR = 2
-    LLLVAR = 3
+    cp500 = "cp500"
+    ascii = "ascii"
+    binary = "binary"

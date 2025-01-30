@@ -10,7 +10,9 @@ class TestBinaryUtils(TestCase):
             randomsequence = randomHex(max(randomBits(4), 1))
             while not randomsequence.replace("0", ""):
                 randomsequence = randomHex(max(randomBits(4), 1))
-            indexes = Binary.toIndexes(Binary.fromHex(randomsequence))
-            answer = Binary.toHex(Binary.fromIndexes(indexes))
+
+            binary = Binary.fromHex(randomsequence)
+            indexes = Binary.toIndexes(binary)
+            answer = Binary.toHex(Binary.fromIndexes(indexes, length=8 * len(binary)))
             n = len(randomsequence)
             self.assertEqual(randomsequence, answer[-n:])
