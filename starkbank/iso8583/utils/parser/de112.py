@@ -21,7 +21,7 @@ class ParseDe112:
     def unparse(self, value, encoding=None, **_kwargs):
         encoding = encoding or self.encoding()
         json = deepcopy(value)
-        string = ""
+        string = b""
         for key, value in sorted(json.items()):
             key = key.replace("SE", "")
             length = len(value)
