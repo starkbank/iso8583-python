@@ -15,7 +15,7 @@ setup(
     author="Stark Bank",
     author_email="developers@starkbank.com",
     keywords=["iso8583", "credit card", "debit card", "mastercard", "visa"],
-    version="0.6.0"
+    version="0.6.1"
 )
 
 """
