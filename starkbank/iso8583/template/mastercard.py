@@ -3,7 +3,7 @@ from ..utils.field import Field
 from ..version import IsoVersion
 from ..utils.header import NoHeaderRule
 from ..utils.length import FixedLengthRule, VariableLengthRule
-from ..utils.parser import ParseBin, ParseDe048, ParseDe112, ParseString, ParseBitmap, ParseBitString
+from ..utils.parser import ParseBin, ParseDe048, ParseDe108, ParseDe112, ParseString, ParseBitmap, ParseBitString
 
 
 mastercard = {
@@ -556,7 +556,7 @@ mastercard = {
         Field(
             name="DE108",
             lengthRule=VariableLengthRule(limit=999, byteLength=3),
-            parsingRule=ParseString(),
+            parsingRule=ParseDe108(),
         ),
         Field(
             name="DE109",

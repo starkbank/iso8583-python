@@ -1,6 +1,7 @@
 from os import path
 from setuptools import setup, find_packages
 
+
 with open(path.join(path.dirname(__file__), "README.md")) as readme:
     README = readme.read()
 
@@ -15,7 +16,7 @@ setup(
     author="Stark Bank",
     author_email="developers@starkbank.com",
     keywords=["iso8583", "credit card", "debit card", "mastercard", "visa"],
-    version="0.6.1"
+    version="0.7.0",
 )
 
 """
@@ -74,5 +75,4 @@ To release a new version:
 ```
 python setup.py sdist upload -r pypi`` inside the project
 ```
-
 """

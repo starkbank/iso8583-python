@@ -32,6 +32,7 @@ class TestIsoMessage(TestCase):
         msg = iso8583.parse(raw, encoding=localEncoding)
         self.assertEqual(raw, iso8583.unparse(msg, encoding=localEncoding))
 
+
     def testParseUnparseVisaAuthorization(self):
         localTemplate = iso8583.visa
         raw64Messages = [
@@ -52,6 +53,43 @@ class TestIsoMessage(TestCase):
             raw = b64decode(raw64)[4:]
             msg = iso8583.parse(raw, template=localTemplate)
             self.assertEqual(raw, iso8583.unparse(msg, template=localTemplate))
+
+    def testParseUnparseMastercard0110WithDE108(self):
+        # DE043 is fixed 40 chars in the _1987 template — must be padded exactly
+        msg = {
+            "MTI": "0110",
+            "DE002": "5276600404324025",
+            "DE003": "000000",
+            "DE004": "000000010000",
+            "DE007": "0701120000",
+            "DE011": "123456",
+            "DE012": "120000",
+            "DE013": "0701",
+            "DE022": "051",
+            "DE025": "02",
+            "DE037": "123456789012",
+            "DE038": "AUTH01",
+            "DE039": "00",
+            "DE041": "12345678",
+            "DE042": "123456789012345",
+            "DE043": "STORE TEST               SAO PAULO    BR",
+            "DE049": "986",
+            "DE108": {
+                "SE01": {
+                    "SF01": "HOMER SIMPSON",
+                    "SF03": "HOMER SIMPSON",
+                    "SF13": "12345678900",
+                }
+            },
+        }
+
+        raw = iso8583.unparse(msg)
+        parsed = iso8583.parse(raw)
+
+        self.assertEqual(raw, iso8583.unparse(parsed))
+        self.assertEqual(parsed["DE108"]["SE01"]["SF01"], "HOMER SIMPSON")
+        self.assertEqual(parsed["DE108"]["SE01"]["SF03"], "HOMER SIMPSON")
+        self.assertEqual(parsed["DE108"]["SE01"]["SF13"], "12345678900")
 
     def testUnparseParseVisaLogin(self):
         localTemplate = iso8583.visa
