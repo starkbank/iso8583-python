@@ -1,5 +1,6 @@
 from .binary import ParseBin
 from .de048 import ParseDe048
+from .de108 import ParseDe108
 from .de112 import ParseDe112
 from .string import ParseString
 from .bitmap import ParseBitmap
