@@ -9,6 +9,10 @@ class TlvElementConfig(Enum):
         "subElementLength": 3,
         "subFieldKey":    2,
         "subFieldLength": 2,
+        # composite subelements per DMAS spec (Tables 1142-1145); plain-value ones
+        # must stay raw strings: SE06 (QR Dynamic Code Data), SE12/SE13 (Receiver/Sender
+        # Organization Name, GLB 11737.2, ans...140, no subfields) and any unknown
+        "compositeSubElements": ("01", "02", "03", "04", "05", "07", "08", "09", "10", "11"),
     }
 
     DE112 = {
@@ -39,10 +43,15 @@ class TlvParser:
             prefix="SE",
             subKeyLength=config["subFieldKey"],
             subLengthSize=config["subFieldLength"],
+            compositeKeys=config.get("compositeSubElements"),
         )
 
     def unparse(self, value, encoding=None, **_kwargs):
         encoding = encoding or self.encoding()
+        # jsons produced before TLV parsing hold the whole element as a string
+        if isinstance(value, str):
+            data = value.encode(encoding)
+            return data, self._logicalLength(data)
         config = self._dataElement.value
         data = _unparseElements(
             json=value,
@@ -65,14 +74,14 @@ class TlvParser:
     def _logicalLength(value):
         return len(value)
 
-def _parseElements(data, keyLength, lengthSize, encoding, prefix, subKeyLength=None, subLengthSize=None):
+def _parseElements(data, keyLength, lengthSize, encoding, prefix, subKeyLength=None, subLengthSize=None, compositeKeys=None):
     result = {}
     while data:
         key = data[0:keyLength].decode(encoding)
         length = int(data[keyLength:keyLength + lengthSize].decode(encoding))
         value = data[keyLength + lengthSize:keyLength + lengthSize + length]
         data = data[keyLength + lengthSize + length:]
-        if subKeyLength is not None:
+        if subKeyLength is not None and (compositeKeys is None or key in compositeKeys):
             result[prefix + key.zfill(keyLength)] = _parseElements(
                 data=value,
                 keyLength=subKeyLength,
@@ -88,7 +97,9 @@ def _unparseElements(json, keyLength, lengthSize, encoding, prefix, subKeyLength
     data = b""
     for key, value in sorted(json.items()):
         key = key.replace(prefix, "").zfill(keyLength)
-        if subKeyLength is not None:
+        # plain-value subelements parse to strings, composite ones to dicts;
+        # deciding by type keeps parse/unparse round-trips lossless
+        if subKeyLength is not None and isinstance(value, dict):
             valueData = _unparseElements(
                 json=value,
                 keyLength=subKeyLength,
