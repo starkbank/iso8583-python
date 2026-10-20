@@ -91,6 +91,59 @@ class TestIsoMessage(TestCase):
         self.assertEqual(parsed["DE108"]["SE01"]["SF03"], "HOMER SIMPSON")
         self.assertEqual(parsed["DE108"]["SE01"]["SF13"], "12345678900")
 
+    def testParseUnparseMastercard0100WithDE122(self):
+        acceptorData = (
+            "001016AV PAULISTA 1000"
+            "002003SP "
+            "003028https://merchant.example.com"
+            "00401111999999999"
+            "00702112345678000190      Y"
+        )
+        de122 = "001" + str(len(acceptorData)).zfill(3) + acceptorData
+        msg = {
+            "MTI": "0100",
+            "DE002": "5276600404324025",
+            "DE003": "000000",
+            "DE004": "000000010000",
+            "DE007": "0701120000",
+            "DE011": "123456",
+            "DE049": "986",
+            "DE122": de122,
+        }
+
+        raw = iso8583.unparse(msg)
+        parsed = iso8583.parse(raw)
+
+        self.assertEqual(raw, iso8583.unparse(parsed))
+        self.assertEqual(parsed["DE122"], de122)
+
+    def testParseUnparseMastercard1240WithPds0216AndPds0300(self):
+        # PDS0300 became an opaque 25-digit Reconciliation Identifier: positions 4-9
+        # are no longer a YYMMDD date, so the value must come back untouched
+        serviceLocation = "SAO PAULO    " + "SP " + "BRA" + "01310100  "
+        reconciliationId = "0029913570000000000012345"
+        msg = {
+            "MTI": "1240",
+            "DE002": "5276600404324025",
+            "DE003": "000000",
+            "DE004": "000000010000",
+            "DE024": "200",
+            "DE049": "986",
+            "DE071": "00000001",
+            "PDS": {
+                "PDS0216": serviceLocation,
+                "PDS0300": reconciliationId,
+            },
+        }
+
+        raw = iso8583.unparse(msg)
+        parsed = iso8583.parse(raw)
+
+        self.assertEqual(raw, iso8583.unparse(parsed))
+        self.assertEqual(parsed["PDS"]["PDS0216"], serviceLocation)
+        self.assertEqual(parsed["PDS"]["PDS0300"], reconciliationId)
+        self.assertEqual(parsed["DE048"], "0216029" + serviceLocation + "0300025" + reconciliationId)
+
     def testUnparseParseVisaLogin(self):
         localTemplate = iso8583.visa
         messageType = "login"
