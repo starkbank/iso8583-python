@@ -166,6 +166,28 @@ class TestIsoMessage(TestCase):
         self.assertEqual(parsed["PDS"]["PDS0300"], reconciliationId)
         self.assertEqual(parsed["DE048"], "0216029" + serviceLocation + "0300025" + reconciliationId)
 
+    def testParseUnparseMastercard0100WithDE105(self):
+        msg = {
+            "MTI": "0100",
+            "DE002": "5276600404324025",
+            "DE003": "000000",
+            "DE004": "000000010000",
+            "DE007": "0701120000",
+            "DE011": "123456",
+            "DE049": "986",
+            "DE105": {
+                "SE001": "MCw9X2kQ7rT4pL8vN3bZ1a",
+                "SE002": "a7F9k3L2-Q8vB6pT1_WzYc",
+            },
+        }
+
+        raw = iso8583.unparse(msg)
+        parsed = iso8583.parse(raw)
+
+        self.assertEqual(raw, iso8583.unparse(parsed))
+        self.assertEqual(parsed["DE105"]["SE001"], "MCw9X2kQ7rT4pL8vN3bZ1a")
+        self.assertEqual(parsed["DE105"]["SE002"], "a7F9k3L2-Q8vB6pT1_WzYc")
+
     def testUnparseParseVisaLogin(self):
         localTemplate = iso8583.visa
         messageType = "login"
