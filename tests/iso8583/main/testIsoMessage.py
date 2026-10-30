@@ -91,6 +91,28 @@ class TestIsoMessage(TestCase):
         self.assertEqual(parsed["DE108"]["SE01"]["SF03"], "HOMER SIMPSON")
         self.assertEqual(parsed["DE108"]["SE01"]["SF13"], "12345678900")
 
+    def testParseUnparseMastercard0100WithDE104LongerThan100Positions(self):
+        # DMAS allows DE104 up to 999 positions; SE003 alone may carry 150
+        cryptogram = "AJkBBkhgQQAAAE4gSEJydAAAAAA="
+        remoteCommerceAcceptorId = "TWVyY2hhbnRJZA" * 10
+        de104 = "001028" + cryptogram + "002012000000015000" + "003140" + remoteCommerceAcceptorId
+        msg = {
+            "MTI": "0100",
+            "DE002": "5276600404324025",
+            "DE003": "000000",
+            "DE004": "000000015000",
+            "DE007": "0701120000",
+            "DE011": "123456",
+            "DE049": "986",
+            "DE104": de104,
+        }
+
+        raw = iso8583.unparse(msg)
+        parsed = iso8583.parse(raw)
+
+        self.assertEqual(raw, iso8583.unparse(parsed))
+        self.assertEqual(parsed["DE104"], de104)
+
     def testParseUnparseMastercard0100WithDE122(self):
         acceptorData = (
             "001016AV PAULISTA 1000"

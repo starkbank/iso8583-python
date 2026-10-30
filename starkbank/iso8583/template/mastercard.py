@@ -535,7 +535,7 @@ mastercard = {
         ),
         Field(
             name="DE104",
-            lengthRule=VariableLengthRule(limit=100, byteLength=3),
+            lengthRule=VariableLengthRule(limit=999, byteLength=3),
             parsingRule=ParseString(),
         ),
         Field(
