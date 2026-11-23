@@ -15,6 +15,16 @@ class TlvElementConfig(Enum):
         "compositeSubElements": ("01", "02", "03", "04", "05", "07", "08", "09", "10", "11"),
     }
 
+    DE105 = {
+        "subElementKey":    3,
+        "subElementLength": 3,
+        "subFieldKey":    3,
+        "subFieldLength": 3,
+        # only SE003 (Lifecycle TLID Validation) has subfields per DMAS Table 1063;
+        # TLIDs in SE001/SE002 are free ans-22 and may look like TLV, so they stay raw
+        "compositeSubElements": ("003",),
+    }
+
     DE112 = {
         "subElementKey":    3,
         "subElementLength": 3,
