@@ -279,3 +279,40 @@ class TestIsoMessage(TestCase):
     def testParseMessageTypeRejectsAMessageShorterThanAnMti(self):
         with self.assertRaises(ValueError):
             iso8583.parseMessageType(b"\xf0\xf1", encoding="cp500")
+
+    def testParseMessageTypeRejectsEmptyAndMissingMessages(self):
+        for message in [b"", None]:
+            with self.assertRaises(ValueError):
+                iso8583.parseMessageType(message, encoding="cp500")
+
+    def testParseMessageTypeRejectsBytesThatAreNotAnMti(self):
+        for message in [b"\x00\x01\x02\x03\x04\x05", "9999".encode("cp500"), "01A0".encode("cp500")]:
+            with self.assertRaises(ValueError):
+                iso8583.parseMessageType(message, encoding="cp500")
+
+    def testParseMessageTypeReadsTheMtiAfterAVisaHeader(self):
+        raw = iso8583.unparse({
+            "Header": {
+                "H02": "01",
+                "H03": "02",
+                "H05": "000000",
+                "H06": "123456",
+                "H07": "00000000",
+                "H08": "0000",
+                "H09": "000000",
+                "H10": "00",
+                "H11": "000000",
+                "H12": "00",
+            },
+            "MTI": "0800",
+            "DE007": "1127123000",
+            "DE011": "000001",
+            "DE070": "071",
+        }, template=iso8583.visa)
+
+        self.assertEqual("0800", iso8583.parseMessageType(raw, template=iso8583.visa))
+
+    def testParseMessageTypeRejectsEmptyAndMissingVisaMessages(self):
+        for message in [b"", None]:
+            with self.assertRaises(ValueError):
+                iso8583.parseMessageType(message, template=iso8583.visa)

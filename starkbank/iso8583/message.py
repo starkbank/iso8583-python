@@ -17,11 +17,8 @@ def getVersion(MTI):
 
 
 def parse(message, template=None, encoding=None):
-    json, template = {}, template or getTemplate()
-    headerRule = template[IsoVersion._1987].getHeaderRule()
-    message, json = headerRule.parse(data=message, json=json)
-
-    MTI, message, length = parseElement(message, elementId="MTI", template=template[IsoVersion._1987], encoding=encoding)
+    template = template or getTemplate()
+    json, MTI, message, length = _parseHeaderAndMti(message, template=template, encoding=encoding)
     version = getVersion(MTI)
 
     result, message, length = loopMessage(message, length, template[version], encoding=encoding)
@@ -45,16 +42,26 @@ def parseMessageType(message, template=None, encoding=None):
         encoding (str, optional): text encoding of the message, e.g. "cp500". Defaults to the current encoding.
 
     Returns:
-        str: the MTI, e.g. "0100".
+        str: the MTI, four digits starting with 0 or 1, e.g. "0100".
 
     Raises:
-        ValueError: if the message is too short to hold an MTI.
+        ValueError: if the message is missing, too short to hold an MTI, or does not start with a valid MTI.
     """
-    template = template or getTemplate()
-    headerRule = template[IsoVersion._1987].getHeaderRule()
-    message, _ = headerRule.parse(data=message, json={})
-    MTI, _, _ = parseElement(message, elementId="MTI", template=template[IsoVersion._1987], encoding=encoding)
+    try:
+        _, MTI, _, _ = _parseHeaderAndMti(message, template=template or getTemplate(), encoding=encoding)
+    except (TypeError, IndexError):
+        raise ValueError("Unable to read the MTI of the message")
+    if len(MTI) != 4 or not MTI.isdigit():
+        raise ValueError("Expected 4 digits in MTI (Actual: {MTI})".format(MTI=repr(MTI)))
+    getVersion(MTI)
     return MTI
+
+
+def _parseHeaderAndMti(message, template, encoding):
+    headerRule = template[IsoVersion._1987].getHeaderRule()
+    message, json = headerRule.parse(data=message, json={})
+    MTI, message, length = parseElement(message, elementId="MTI", template=template[IsoVersion._1987], encoding=encoding)
+    return json, MTI, message, length
 
 
 def unparse(parsed, template=None, encoding=None):
