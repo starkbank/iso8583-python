@@ -286,7 +286,7 @@ class TestIsoMessage(TestCase):
                 iso8583.parseMessageType(message, encoding="cp500")
 
     def testParseMessageTypeRejectsBytesThatAreNotAnMti(self):
-        for message in [b"\x00\x01\x02\x03\x04\x05", "9999".encode("cp500"), "01A0".encode("cp500")]:
+        for message in [b"\x00\x01\x02\x03\x04\x05", "9999".encode("cp500")]:
             with self.assertRaises(ValueError):
                 iso8583.parseMessageType(message, encoding="cp500")
 

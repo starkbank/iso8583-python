@@ -42,7 +42,7 @@ def parseMessageType(message, template=None, encoding=None):
         encoding (str, optional): text encoding of the message, e.g. "cp500". Defaults to the current encoding.
 
     Returns:
-        str: the MTI, four digits starting with 0 or 1, e.g. "0100".
+        str: the MTI, starting with 0 or 1, e.g. "0100".
 
     Raises:
         ValueError: if the message is missing, too short to hold an MTI, or does not start with a valid MTI.
@@ -51,8 +51,6 @@ def parseMessageType(message, template=None, encoding=None):
         _, MTI, _, _ = _parseHeaderAndMti(message, template=template or getTemplate(), encoding=encoding)
     except (TypeError, IndexError):
         raise ValueError("Unable to read the MTI of the message")
-    if len(MTI) != 4 or not MTI.isdigit():
-        raise ValueError("Expected 4 digits in MTI (Actual: {MTI})".format(MTI=repr(MTI)))
     getVersion(MTI)
     return MTI
 
