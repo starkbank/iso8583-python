@@ -33,6 +33,30 @@ def parse(message, template=None, encoding=None):
     return json
 
 
+def parseMessageType(message, template=None, encoding=None):
+    """Reads only the message type indicator (MTI) of a raw ISO 8583 message.
+
+    Unlike parse, it does not read any data element, so it still returns the
+    MTI when a later field of the message is malformed.
+
+    Args:
+        message (bytes): raw ISO 8583 message.
+        template (dict, optional): message template. Defaults to the current template.
+        encoding (str, optional): text encoding of the message, e.g. "cp500". Defaults to the current encoding.
+
+    Returns:
+        str: the MTI, e.g. "0100".
+
+    Raises:
+        ValueError: if the message is too short to hold an MTI.
+    """
+    template = template or getTemplate()
+    headerRule = template[IsoVersion._1987].getHeaderRule()
+    message, _ = headerRule.parse(data=message, json={})
+    MTI, _, _ = parseElement(message, elementId="MTI", template=template[IsoVersion._1987], encoding=encoding)
+    return MTI
+
+
 def unparse(parsed, template=None, encoding=None):
     template = template or getTemplate()
     parsed = deepcopy(parsed)

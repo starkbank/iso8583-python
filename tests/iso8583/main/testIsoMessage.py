@@ -262,3 +262,20 @@ class TestIsoMessage(TestCase):
         parsedMsg = iso8583.parse(raw, template=localTemplate)
         for key, value in visaLogin.items():
             self.assertEqual(value, parsedMsg[key])
+
+    def testParseMessageTypeReadsTheMtiOfAMastercardMessage(self):
+        raw = iso8583.unparse({"MTI": "0120", "DE001": [], "DE002": "5249881234561552", "DE003": "003000"}, encoding="cp500")
+
+        self.assertEqual("0120", iso8583.parseMessageType(raw, encoding="cp500"))
+
+    def testParseMessageTypeStillReadsTheMtiWhenTheMessageFailsToParse(self):
+        raw = iso8583.unparse({"MTI": "0100", "DE001": [], "DE002": "5249881234561552", "DE003": "003000"}, encoding="cp500")
+        truncated = raw[:-4]
+
+        with self.assertRaises(ValueError):
+            iso8583.parse(truncated, encoding="cp500")
+        self.assertEqual("0100", iso8583.parseMessageType(truncated, encoding="cp500"))
+
+    def testParseMessageTypeRejectsAMessageShorterThanAnMti(self):
+        with self.assertRaises(ValueError):
+            iso8583.parseMessageType(b"\xf0\xf1", encoding="cp500")

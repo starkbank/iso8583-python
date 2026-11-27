@@ -16,4 +16,4 @@ def getTemplate():
     return template
 
 
-from .message import parse, unparse
+from .message import parse, parseMessageType, unparse
